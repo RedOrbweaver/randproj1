@@ -78,6 +78,6 @@ def AssignDecomposed(originals, decomposed):
         taken.append(it[2])
         nt += 1
     assert nt == len(originals)
-    print(values)
-    print(slots)
+    #print(values)
+    #print(slots)
     return slots
