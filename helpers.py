@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from IPython.display import display, Markdown, Latex, Audio
 from numpy import sqrt
 from sklearn.decomposition import FastICA
+import scipy.signal as sps
+import scipy.stats as stat
 
 plt.style.use('default')
 plt.interactive(True)
@@ -31,25 +33,66 @@ def AddNoise(data, level, f = np.random.normal):
     s = data + (f(size=data.shape) * level)
     return s * abs(1/np.max(s)) # normalized
 
-# quality - mean squared error
 def DecompositionQuality(original, decomposed):
-    diff = original-decomposed
-    mean = np.mean(diff)
-    score = np.mean(np.array([x**2 for x in diff]))
-    return score, mean, diff # quality, mean, diff.
+    score = np.corrcoef(original, decomposed, "valid")[1]
+    return abs(score[0]), score[0] # score, correlation
+def Normalize(dt):
+    return np.array(dt) / np.sum(dt)
 
-def PlotDecompositionQuality(original, decomposed, label):
-    quality, mean, diff = DecompositionQuality(original, decomposed)
-    var = np.var(diff)
-    plt.figure()
-    plt.plot(diff, label="difference" )
-    plt.axhline(y=var, color="g", linestyle=":", label="Variance: " + str(round(var, 4)))
-    plt.title("Quality of " + label + " decomposition : " + str(quality))
-    plt.legend()
+def GetFullCorrelation(s0, s1):
+    fc = sps.correlate(s0, s1, "full")
+    return fc * np.max(fc)
+
+def PlotDecompositionQuality(original, decomposed, label, playable=False, samplerate=0, to_compare=None, compare_label="", playable_compare = False):
+    score, correlation = DecompositionQuality(original, decomposed)
+    full_correlation = GetFullCorrelation(original, decomposed)
+    
+    comp = to_compare is not None
+
+    comp_score, comp_correlation = (None, None) if not comp else DecompositionQuality(original, to_compare)
+    comp_full_correlation = None if not comp else GetFullCorrelation(original, decomposed)
+
+    fig, ax = plt.subplots(3) if not comp else plt.subplots(3, 2)
+    plt.tight_layout()
+
+    display(Markdown("### Overall correlation: " + str(score) + ("" if not comp else " vs " + str(comp_score) + " for " + compare_label)))
+
+    def PlotAxis(ax, original, decomposed, full_correlation, label, original_label):
+        var = np.var(full_correlation)
+        mean = np.mean(full_correlation)
+        ax[0].plot(decomposed, label = "Decomposed " + label)
+        ax[0].set_title("Decomposed " + label)
+        ax[0].legend()
+
+        ax[1].plot(original, label="Original " + original_label)
+        ax[1].set_title("Original " + original_label)
+        ax[1].legend()
+
+        ax[2].plot(full_correlation, label = "Correlation of " + label)
+        ax[2].set_title("Correlation, avg=" + str(score))
+        ax[2].axhline(y=sqrt(var), color="g", linestyle=":", label="Standard devation: ≈" + str(round(var, 5)))
+        ax[2].axhline(y=-sqrt(var), color="g", linestyle=":")
+        ax[2].axhline(y=mean, color="r", linestyle="-.", label="Mean: ≈" + str(round(mean, 5)))
+        ax[2].legend()
+
+    if comp:
+        PlotAxis([ax[0][0], ax[1][0], ax[2][0]], original, decomposed, full_correlation, label, label)
+        PlotAxis([ax[0][1], ax[1][1], ax[2][1]], original, to_compare, GetFullCorrelation(original, to_compare), compare_label, label)
+    else:
+        PlotAxis(ax, original, decomposed, full_correlation, label, label)
+
     plt.show()
-    return quality, mean, diff
+    if playable:
+        assert samplerate != 0
+        display(Markdown("Output:"))
+        display(Audio(data = decomposed, rate=samplerate, ))
+    if playable_compare:
+        assert samplerate != 0
+        display(Markdown("Sklearn output:"))
+        display(Audio(data = decomposed, rate=samplerate, ))
+    #print(full_correlation)
+    return score, correlation, full_correlation
 
-# Assumption: the original signal will clearly have a corresponding decomposed signal. This might be unwise.
 def AssignDecomposed(originals, decomposed):
     assert len(originals) == len(decomposed)
     #return decomposed
@@ -58,12 +101,12 @@ def AssignDecomposed(originals, decomposed):
     for o in originals:
         ii = 0
         for d in decomposed:
-            q, _, _ = DecompositionQuality(o, d)
+            q, _ = DecompositionQuality(o, d)
             values.append((q, i, ii))
             ii += 1
         i += 1
     taken = []
-    values = sorted(values, key=lambda v: v[0])
+    values = sorted(values, key=lambda v: -v[0])
     slots = [None] * len(originals)
     nt = 0
     for it in values:
