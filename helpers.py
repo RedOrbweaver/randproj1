@@ -57,7 +57,7 @@ def PlotDecompositionQuality(original, decomposed, label, playable=False, sample
 
     display(Markdown("### Absolute correlation coefficient: " + str(score) + ("" if not comp else " vs " + str(comp_score) + " for " + compare_label)))
 
-    def PlotAxis(ax, original, decomposed, full_correlation, label, original_label):
+    def PlotAxis(ax, original, decomposed, full_correlation, score, label, original_label):
         var = np.var(full_correlation)
         mean = np.mean(full_correlation)
         ax[0].plot(decomposed, label = "Decomposed " + label)
@@ -68,7 +68,7 @@ def PlotDecompositionQuality(original, decomposed, label, playable=False, sample
         ax[1].set_title("Original " + original_label)
         ax[1].legend()
 
-        ax[2].plot(full_correlation, label = "Correlation of " + label)
+        ax[2].plot(full_correlation, label = "Discreate linear cross-correlation of " + label)
         ax[2].set_title("Correlation, avg=" + str(score))
         ax[2].axhline(y=sqrt(var), color="g", linestyle=":", label="Standard devation: ≈" + str(round(var, 5)))
         ax[2].axhline(y=-sqrt(var), color="g", linestyle=":")
@@ -76,10 +76,10 @@ def PlotDecompositionQuality(original, decomposed, label, playable=False, sample
         ax[2].legend()
 
     if comp:
-        PlotAxis([ax[0][0], ax[1][0], ax[2][0]], original, decomposed, full_correlation, label, label)
-        PlotAxis([ax[0][1], ax[1][1], ax[2][1]], original, to_compare, GetFullCorrelation(original, to_compare), compare_label, label)
+        PlotAxis([ax[0][0], ax[1][0], ax[2][0]], original, decomposed, full_correlation, score, label, label)
+        PlotAxis([ax[0][1], ax[1][1], ax[2][1]], original, to_compare, GetFullCorrelation(original, to_compare), np.corrcoef(original, to_compare), compare_label, label)
     else:
-        PlotAxis(ax, original, decomposed, full_correlation, label, label)
+        PlotAxis(ax, original, decomposed, full_correlation, score, label, label)
 
     plt.show()
     if playable:
