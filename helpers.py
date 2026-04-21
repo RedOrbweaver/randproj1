@@ -41,7 +41,7 @@ def Normalize(dt):
 
 def GetFullCorrelation(s0, s1):
     fc = sps.correlate(s0, s1, "full")
-    return fc * np.max(fc)
+    return np.array(fc * np.max(fc))
 
 def PlotDecompositionQuality(original, decomposed, label, playable=False, samplerate=0, to_compare=None, compare_label="", playable_compare = False):
     score, correlation = DecompositionQuality(original, decomposed)
@@ -55,7 +55,7 @@ def PlotDecompositionQuality(original, decomposed, label, playable=False, sample
     fig, ax = plt.subplots(3) if not comp else plt.subplots(3, 2)
     plt.tight_layout()
 
-    display(Markdown("### Overall correlation: " + str(score) + ("" if not comp else " vs " + str(comp_score) + " for " + compare_label)))
+    display(Markdown("### Absolute correlation coefficient: " + str(score) + ("" if not comp else " vs " + str(comp_score) + " for " + compare_label)))
 
     def PlotAxis(ax, original, decomposed, full_correlation, label, original_label):
         var = np.var(full_correlation)
@@ -124,3 +124,19 @@ def AssignDecomposed(originals, decomposed):
     #print(values)
     #print(slots)
     return slots
+def MatrixToLatex(mat:np.array, command="bmatrix")->str:
+    ret = ""
+    if len(mat.shape) == 1:
+        for i in range(0, mat.shape[0]):
+            ret += str(mat[i])
+            if i != mat.shape[0] - 1:
+                ret += "&"
+    else:
+        for i in range(0, mat.shape[0]):
+            for ii in range(0, mat.shape[1]):
+                ret += str(mat[i, ii])
+                if ii != mat.shape[1] - 1:
+                    ret += "&"
+            if i != mat.shape[1] - 1:
+                ret += "\\\\"
+    return "\\begin{" + command + "} " + ret + "\\end{" + command + "}"
