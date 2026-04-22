@@ -9,10 +9,13 @@ from numpy import sqrt
 from sklearn.decomposition import FastICA
 import scipy.signal as sps
 import scipy.stats as stat
+import warnings
 
 plt.style.use('default')
 plt.interactive(True)
 plt.rcParams['figure.figsize'] = [10, 5]
+
+warnings.filterwarnings("ignore", 'Creating legend with loc="best" can be slow with large amounts of data.')
 
 def ReadWavFile(path):
     samplerate, signal_raw = wavfile.read(path)
@@ -70,14 +73,14 @@ def PlotDecompositionQuality(original, decomposed, label, playable=False, sample
 
         ax[2].plot(full_correlation, label = "Discreate linear cross-correlation of " + label)
         ax[2].set_title("Correlation, avg=" + str(score))
-        ax[2].axhline(y=sqrt(var), color="g", linestyle=":", label="Standard devation: ≈" + str(round(var, 5)))
-        ax[2].axhline(y=-sqrt(var), color="g", linestyle=":")
-        ax[2].axhline(y=mean, color="r", linestyle="-.", label="Mean: ≈" + str(round(mean, 5)))
+        #ax[2].axhline(y=sqrt(var), color="g", linestyle=":", label="Standard devation: ≈ " + str(round(var, 5)))
+        #ax[2].axhline(y=-sqrt(var), color="g", linestyle=":")
+        #ax[2].axhline(y=mean, color="r", linestyle="-.", label="Mean: ≈ " + str(round(mean, 5)))
         ax[2].legend()
 
     if comp:
         PlotAxis([ax[0][0], ax[1][0], ax[2][0]], original, decomposed, full_correlation, score, label, label)
-        PlotAxis([ax[0][1], ax[1][1], ax[2][1]], original, to_compare, GetFullCorrelation(original, to_compare), np.corrcoef(original, to_compare), compare_label, label)
+        PlotAxis([ax[0][1], ax[1][1], ax[2][1]], original, to_compare, GetFullCorrelation(original, to_compare), np.corrcoef(original, to_compare, "valid")[1], compare_label, label)
     else:
         PlotAxis(ax, original, decomposed, full_correlation, score, label, label)
 
