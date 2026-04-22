@@ -80,7 +80,7 @@ def PlotDecompositionQuality(original, decomposed, label, playable=False, sample
 
     if comp:
         PlotAxis([ax[0][0], ax[1][0], ax[2][0]], original, decomposed, full_correlation, score, label, label)
-        PlotAxis([ax[0][1], ax[1][1], ax[2][1]], original, to_compare, GetFullCorrelation(original, to_compare), np.corrcoef(original, to_compare, "valid")[1], compare_label, label)
+        PlotAxis([ax[0][1], ax[1][1], ax[2][1]], original, to_compare, GetFullCorrelation(original, to_compare), abs(np.corrcoef(original, to_compare, "valid")[1][0]), compare_label, label)
     else:
         PlotAxis(ax, original, decomposed, full_correlation, score, label, label)
 
